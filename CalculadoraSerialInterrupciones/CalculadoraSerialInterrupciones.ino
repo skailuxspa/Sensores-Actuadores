@@ -31,7 +31,7 @@ int32_t data;
 
 void setup() {
   Serial.begin(9600);
-  Serial.println("asdfasd");
+  Serial.println("Start");
   Timer1.initialize(5000000);
   Timer1.attachInterrupt(CancelOperation);
 }
@@ -118,7 +118,7 @@ void WaitForInput(uint8_t _inputState) {
 void SetTimeOut() {
   cancelFlag = 0;
   
-  Timer1.restart2();
+  Timer1.restart();
   
   Serial.print("Enter a number(digit #");
   Serial.print(inputState);
