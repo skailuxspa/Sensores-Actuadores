@@ -1,13 +1,14 @@
-#include <TimerOne.h>
-
 /*
   Flujo:
   Pide operacion -> Revisa si hay operación -> Pone TimeOut -> Pide primer digito -> Pone TimeOut -> Pide segundo digito -> imprime resultado
 
   TODO:
   1) TimeOuts -> BUG: con TimerOne apenas reinicio o llamo el SetTimeOut se llama la interrupción y cancela toda la operación.
+    - SOLUCION TEMPORAL: Editar el codigo fuente de Timer1 para que al reiniciar el contador no empiece en 0 sino en 1. Efectos secudnarios son desconocidos.
   2) Serial Input Handle API: Generalize the processing method.
 */
+
+#include <TimerOne.h>
 
 #define REQUEST_OPERATION 0
 #define WAITING_FOR_OPERATION 1
@@ -33,7 +34,6 @@ void setup() {
   Serial.println("asdfasd");
   Timer1.initialize(5000000);
   Timer1.attachInterrupt(CancelOperation);
-  //Timer1.stop();
 }
 
 void loop() {
@@ -104,12 +104,10 @@ void WaitForInput(uint8_t _inputState) {
       case 1:
         a = incommingByte;
         inputState++;
-        //Timer1.detachInterrupt();
         SetTimeOut();
         break;
       case 2:
         b = incommingByte;
-        //Timer1.detachInterrupt();
         ExecuteOperation();
         break;
     }
@@ -129,19 +127,12 @@ void SetTimeOut() {
   SetState(WAITING_FOR_INPUT);
 }
 
-//BUUUUUUUUG
-//Doesn't really abort anything, just says that it aborts it, sets the state, and eventually when the program goes back
-//to where it was, sets everything back to where it was and the abortion ends up doing nothing at all.
 void CancelOperation() {
-  //Timer1.stop();
-  //Timer1.detachInterrupt();
-  //Serial.println("Operation timeout. Aborting.");
   cancelFlag  = 1;
 }
 
 //Executes a mathematical operation depending on the value stores in 'operation'
 void ExecuteOperation() {
-  //Timer1.stop();
   uint32_t r = 0;
   switch (operation) {
     case '+':
@@ -272,8 +263,6 @@ void ProcessOperation() {
 void SetData(int32_t _data) {
   newData = true;
   data = _data;
-  //Serial.print("Informacion seteada a: ");
-  //Serial.println(data);
 }
 
 //get the value of the stores data
@@ -281,7 +270,6 @@ int32_t GetData() {
   if (newData = true && data != 0) {
     return data;
   }
-  //Serial.println("Devolviendo que NO hay informacion");
   return 0;
 
 }
@@ -295,8 +283,6 @@ bool GetNewData() {
 void ResetData() {
   newData = false;
   data = 0;
-  //Serial.print("Informacion reseteada a: ");
-  //Serial.println(data);
 }
 
 
