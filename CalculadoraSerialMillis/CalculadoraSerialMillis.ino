@@ -1,12 +1,9 @@
-#include <TimerOne.h>
-
 /*
   Flujo:
   Pide operacion -> Revisa si hay operación -> Pone TimeOut -> Pide primer digito -> Pone TimeOut -> Pide segundo digito -> imprime resultado
-
+  
   TODO:
-  1) TimeOuts -> BUG: con TimerOne apenas reinicio o llamo el SetTimeOut se llama la interrupción y cancela toda la operación.
-  2) Serial Input Handle API: Generalize the processing method.
+  1) Serial Input Handle API: Generalize the processing method.
 */
 
 #define REQUEST_OPERATION 0
@@ -15,25 +12,29 @@
 #define WAITING_FOR_INPUT 3
 #define EXECUTE_OPERATION 4
 
+#define ABORT_TIME 5000
+
+//Serial communication protocol
 const char endOfSentenceDelimiter = '\n';
 const char startOfSentenceDelimiter = ':';
 
+//Calculator state machine
 uint8_t state = REQUEST_OPERATION;
 uint8_t operation;
 uint8_t inputState = 0;
 int32_t a, b;
+uint32_t previousMillis = 0;
 
-volatile byte cancelFlag = 0;
+//Abortion Flag
+byte cancelFlag = 0;
 
+//Communication API flags
 bool newData = false;
 int32_t data;
 
 void setup() {
   Serial.begin(9600);
-  Serial.println("asdfasd");
-  Timer1.initialize(5000000);
-  Timer1.attachInterrupt(CancelOperation);
-  //Timer1.stop();
+  Serial.println("Start");
 }
 
 void loop() {
@@ -43,6 +44,13 @@ void loop() {
 
 //Calculator state machine
 void Calculator() {
+
+  uint32_t currentMillis = millis();
+  if(currentMillis - previousMillis >= ABORT_TIME){
+    previousMillis = currentMillis;
+    cancelFlag = 1;
+  }
+  
   switch (state) {
     case REQUEST_OPERATION:
       RequestOperation();
@@ -104,12 +112,10 @@ void WaitForInput(uint8_t _inputState) {
       case 1:
         a = incommingByte;
         inputState++;
-        //Timer1.detachInterrupt();
         SetTimeOut();
         break;
       case 2:
         b = incommingByte;
-        //Timer1.detachInterrupt();
         ExecuteOperation();
         break;
     }
@@ -119,24 +125,13 @@ void WaitForInput(uint8_t _inputState) {
 //Turn on the timer/attach interrupt that activates go abortion system and then go to the next state.
 void SetTimeOut() {
   cancelFlag = 0;
-  
-  Timer1.restart2();
+  previousMillis = millis();
   
   Serial.print("Enter a number(digit #");
   Serial.print(inputState);
   Serial.println(")");
   debugStates();
   SetState(WAITING_FOR_INPUT);
-}
-
-//BUUUUUUUUG
-//Doesn't really abort anything, just says that it aborts it, sets the state, and eventually when the program goes back
-//to where it was, sets everything back to where it was and the abortion ends up doing nothing at all.
-void CancelOperation() {
-  //Timer1.stop();
-  //Timer1.detachInterrupt();
-  //Serial.println("Operation timeout. Aborting.");
-  cancelFlag  = 1;
 }
 
 //Executes a mathematical operation depending on the value stores in 'operation'
