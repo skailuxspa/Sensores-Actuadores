@@ -12,7 +12,9 @@ const char checkChar = 'c';
 
 const uint8_t valuesLength = 4;
 
+uint16_t valuesBuffer[valuesLength] = {0, 0, 0, 0};
 uint16_t values[valuesLength] = {0, 0, 0, 0};
+
 byte canReadValues = 0;
 
 void setup() {
@@ -39,43 +41,49 @@ void RGBLed() {
 }
 
 void ProcessSerial() {
+  
   static uint16_t receivedData = 0;
-  static byte i = 0;
+  static uint8_t i = 5;
+  
   byte b = Serial.read();
+  
   switch (b) {
 
     case syncChar:
       canReadValues = 0;
       receivedData = 0;
-      i = 100;
+      i = 5;
       break;
 
     case redChar:
-      values[i] = receivedData;
-      receivedData = 0;
+      valuesBuffer[i] = receivedData;
       i = RED;
+      receivedData = 0;
       break;
 
     case greenChar:
-      values[i] = receivedData;
+      valuesBuffer[i] = receivedData;
       receivedData = 0;
       i = GREEN;
       break;
 
     case blueChar:
-      values[i] = receivedData;
+      valuesBuffer[i] = receivedData;
       receivedData = 0;
       i = BLUE;
       break;
 
     case checkChar:
-      values[i] = receivedData;
+      valuesBuffer[i] = receivedData;
       receivedData = 0;
       i = CHECK;
       break;
 
     case endChar:
+      valuesBuffer[i] = receivedData;
+      receivedData = 0;
       canReadValues = 1;
+      i = 5;
       ShowStuff();
       break;
 
@@ -89,6 +97,15 @@ void ProcessSerial() {
   }
 }
 
+void Checksum() {
+  if(true){
+    values = valuesBuffer;
+    Serial.println("Accepted");
+  }else{
+    Serial.println("Error");
+  }
+}
+
 void ShowStuff() {
   //if (canReadValues) {
     for (int i = 0; i < valuesLength; i++)
@@ -96,8 +113,10 @@ void ShowStuff() {
       Serial.print(values[i]);
       Serial.print(", ");
     }
-    //Serial.println();
+    Serial.println();
     //canReadValues = 0;
   //}
 }
+
+
 
