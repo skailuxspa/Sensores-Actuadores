@@ -1,8 +1,3 @@
-#define RED 0
-#define GREEN 1
-#define BLUE 2
-#define CHECK 3
-
 const char syncChar = '<';
 const char endChar = '>';
 const char redChar = 'r';
@@ -10,12 +5,15 @@ const char greenChar = 'g';
 const char blueChar = 'b';
 const char checkChar = 'c';
 
-const uint8_t valuesLength = 4;
+typedef enum {NONE, RED, GREEN, BLUE, CHECK} states;
+states state = NONE;
 
-uint16_t valuesBuffer[valuesLength] = {0, 0, 0, 0};
-uint16_t values[valuesLength] = {0, 0, 0, 0};
+const uint8_t valuesLength = 5;
+//state = NIL;
 
-byte canReadValues = 0;
+uint16_t values[valuesLength] = {0, 0, 0, 0, 0};
+
+//byte canReadValues = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -41,56 +39,56 @@ void RGBLed() {
 }
 
 void ProcessSerial() {
-  
-  static uint16_t receivedData = 0;
-  static uint8_t i = 5;
+  static uint16_t valuesBuffer[valuesLength] = {0, 0, 0, 0};
+  static uint16_t dataBuffer = 0;
+  //static uint8_t i = 5;
   
   byte b = Serial.read();
   
   switch (b) {
 
     case syncChar:
-      canReadValues = 0;
-      receivedData = 0;
-      i = 5;
+      //canReadValues = 0;
+      dataBuffer = 0;
+      state = NONE;
       break;
 
     case redChar:
-      valuesBuffer[i] = receivedData;
-      i = RED;
-      receivedData = 0;
+      valuesBuffer[state] = dataBuffer;
+      state = RED;
+      dataBuffer = 0;
       break;
 
     case greenChar:
-      valuesBuffer[i] = receivedData;
-      receivedData = 0;
-      i = GREEN;
+      valuesBuffer[state] = dataBuffer;
+      dataBuffer = 0;
+      state = GREEN;
       break;
 
     case blueChar:
-      valuesBuffer[i] = receivedData;
-      receivedData = 0;
-      i = BLUE;
+      valuesBuffer[state] = dataBuffer;
+      dataBuffer = 0;
+      state = BLUE;
       break;
 
     case checkChar:
-      valuesBuffer[i] = receivedData;
-      receivedData = 0;
-      i = CHECK;
+      valuesBuffer[state] = dataBuffer;
+      dataBuffer = 0;
+      state = CHECK;
       break;
 
     case endChar:
-      valuesBuffer[i] = receivedData;
-      receivedData = 0;
-      canReadValues = 1;
-      i = 5;
+      valuesBuffer[state] = dataBuffer;
+      dataBuffer = 0;
+      //canReadValues = 1;
+      state = NONE;
       ShowStuff();
       break;
 
     case '0' ... '9':
-      if (i == RED || i == GREEN || i == BLUE || i == CHECK) {
-        receivedData *= 10;
-        receivedData += b - '0';
+      if (state != NONE) {
+        dataBuffer *= 10;
+        dataBuffer += b - '0';
 
       }
       break;
@@ -99,7 +97,7 @@ void ProcessSerial() {
 
 void Checksum() {
   if(true){
-    values = valuesBuffer;
+    //values = valuesBuffer;
     Serial.println("Accepted");
   }else{
     Serial.println("Error");
